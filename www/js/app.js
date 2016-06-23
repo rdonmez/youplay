@@ -58,6 +58,15 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
       }
     }
   })
+  .state('tab.video', {
+    url: '/video/:videoId',
+    views: {
+      'tab-video': {
+        templateUrl: 'templates/tab-video.html',
+        controller: 'VideoCtrl'
+      }
+    }
+  })
   .state('tab.playing', {
       url: '/playing',
       views: {

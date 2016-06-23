@@ -4,8 +4,16 @@ angular.module('starter.services', [])
 
 .factory("VideoService", function($http) {
   return {
-    search: function (q, prevPageToken, nextPageToken, maxResults) {
-      return $http.get("https://www.googleapis.com/youtube/v3/search?q="+ q +"&part=snippet&key="+ key).then(function (response){
+    search: function (q) {
+      var url = "https://www.googleapis.com/youtube/v3/search?q="+ q +"&part=snippet&maxResults=25&type=video&key="+ key;
+      return $http.get(url).then(function (response){
+          result = response.data;
+          return result;
+      });
+    },
+    searchMore: function (q, nextPageToken) {
+      var url = "https://www.googleapis.com/youtube/v3/search?q="+ q +"&part=snippet&maxResults=25&&type=video&key="+ key +"&nextPageToken="+ nextPageToken;
+      return $http.get(url).then(function (response){
           result = response.data;
           return result;
       });

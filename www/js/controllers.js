@@ -4,9 +4,59 @@ angular.module('starter.controllers', [])
     
 })
 
-.controller('SearchCtrl', function($scope, VideoService) {
+.controller('SearchCtrl', function($scope, $ionicLoading, VideoService) {
 
-     
+    $scope.show = function() {
+      $ionicLoading.show({
+        template: 'Loading...'
+      }).then(function(){
+         
+      });
+    };
+    $scope.hide = function(){
+      $ionicLoading.hide().then(function(){
+         
+      });
+    };
+
+    $scope.search = {value: '', focus: false, nextPageToken: ""};
+    $scope.cancelSearch = function() {
+      inputElement.blur();
+      scope.search.value = '';
+    };
+
+    $scope.doSearch = function() {
+      $scope.show();
+      VideoService.search($scope.search.value).then(function (result) {
+        console.log(result)
+         $scope.result = result;
+         $scope.search.nextPageToken = result.nextPageToken;
+         $scope.hide()
+      });
+    };
+
+    $scope.searcMore = function() {
+      VideoService.search($scope.search.value, $scope.search.nextPageToken).then(function (result) {
+        $scope.result = result;
+        $scope.hide(); 
+        $scope.$broadcast('scroll.infiniteScrollComplete');
+      });
+    };
+
+    $scope.$on('$stateChangeSuccess', function() {
+      $scope.loadMore();
+    });
+
+})
+
+.controller('VideoCtrl', function($scope, $routeParams, VideoService) {
+  
+    console.log($routeParams.param)
+    
+    VideoService.get($$routeParams.param).then(function (result) {
+       $scope.result = result;
+    });
+  
 })
 
 .controller('PlayingCtrl', function($scope) {
