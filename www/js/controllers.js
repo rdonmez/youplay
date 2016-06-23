@@ -20,6 +20,7 @@ angular.module('starter.controllers', [])
     };
 
     $scope.search = {value: '', focus: false, nextPageToken: ""};
+    
     $scope.cancelSearch = function() {
       inputElement.blur();
       scope.search.value = '';
@@ -28,7 +29,6 @@ angular.module('starter.controllers', [])
     $scope.doSearch = function() {
       $scope.show();
       VideoService.search($scope.search.value).then(function (result) {
-        console.log(result)
          $scope.result = result;
          $scope.search.nextPageToken = result.nextPageToken;
          $scope.hide()
@@ -38,14 +38,14 @@ angular.module('starter.controllers', [])
     $scope.searcMore = function() {
       VideoService.search($scope.search.value, $scope.search.nextPageToken).then(function (result) {
         $scope.result = result;
-        $scope.hide(); 
         $scope.$broadcast('scroll.infiniteScrollComplete');
+        $scope.hide(); 
       });
     };
 
-    $scope.$on('$stateChangeSuccess', function() {
-      $scope.loadMore();
-    });
+    //$scope.$on('$stateChangeSuccess', function() {
+    //  $scope.loadMore();
+    //});
 
 })
 
