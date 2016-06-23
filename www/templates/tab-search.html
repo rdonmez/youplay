@@ -1,0 +1,19 @@
+<ion-view view-title="Search">
+  <ion-content class="has-header">
+	 
+	<ion-search-bar placeholder="Search..."></ion-search-bar>
+  	<ion-list>
+		<div collection-repeat="item in result.items" divider-collection-repeat>
+		  <ion-item>
+		    <div>{{ item.snippet.title }}</div>
+		    <div>{{ item.snippet.publishedAt | date:'dd-MM-yyyy' }}</div>
+		  </ion-item>
+		</div>
+	</ion-list> 
+	<ion-infinite-scroll ng-if="listlength<=results.length" on-infinite="loadMore()" distance="3%">
+    </ion-infinite-scroll>
+  </ion-content>
+</ion-view>
+
+
+ 
