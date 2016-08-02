@@ -1,0 +1,46 @@
+<ion-view view-title="{{playlist.name}}">
+
+	<ion-nav-buttons side="right">
+	    <button ng-if="playlist.videos.length > 0" class="button button-clear button-assertive button-icon icon ion-ios-play" ng-click="data.playing = !data.playing;" ng-show="!data.playing">
+	    </button>
+	    <button ng-if="playlist.videos.length > 0" class="button button-clear button-assertive button-icon icon ion-stop ng-hide" ng-click="data.playing = !data.playing;" ng-show="data.playing">
+	    </button>
+	</ion-nav-buttons>
+ 
+	<div class="bar bar-subheader" ng-if="playlist.videos.length > 0">
+		<button ng-if="playlist.videos.length > 0" class="button button-clear button-assertive" ng-click="data.showDelete = !data.showDelete;" ng-show="!data.showDelete">
+        	Edit
+        </button>
+        <button ng-if="playlist.videos.length > 0" class="button button-clear button-assertive ng-hide button-rigth" ng-click="data.showDelete = !data.showDelete;" ng-show="data.showDelete">
+	    	Done
+	    </button>
+	    <button ng-if="playlist.videos.length > 0" class="button button-clear button-assertive" ng-click="clearPlaylist(playlist)" ng-show="data.showDelete">
+		 	Clear
+	    </button> 
+	</div>
+	 
+
+	<ion-content class="has-header" ng-class="{ 'has-subheader': playlist.videos.length > 0 }">
+		<ion-refresher
+        	on-refresh="doRefresh()">
+      	</ion-refresher>
+		<ion-filter-bar placeholder="Search in {{playlist.name}}">
+		</ion-filter-bar>
+		<ion-list class="icon-right" can-swipe="true" show-delete="data.showDelete">
+			<ion-item class="item-thumbnail-left" ui-sref="tab.video({ videoId: item.id.videoId})" href="#/tab/video/{{item.id }}" ng-repeat="item in playlist.videos | filter:searchText">
+				<ion-delete-button class="ion-minus-circled" ng-click="removeFromPlaylist(playlist, item)">
+    			</ion-delete-button>
+			    <img src="{{ item.snippet.thumbnails.default.url }}" item-width="33%" item-height="200px">
+	           	<h2> {{ item.snippet.title }}</h2>
+				<p>
+					by <a class="dark">{{ item.snippet.channelTitle }}</a>
+					<br />
+					<span am-time-ago="item.snippet.publishedAt"></span>
+				</p> 
+			   <ion-option-button class="button-assertive" ng-click="removeFromPlaylist(playlist, item)">
+			   Delete
+			   </ion-option-button>
+			</ion-item>
+		</ion-list>
+	</ion-content>
+</ion-view>

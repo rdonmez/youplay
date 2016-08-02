@@ -1,28 +1,68 @@
-<ion-view view-title="Search">
-  <ion-content class="has-header">
-	<form ng-submit="doSearch()">
-		<div class="search-bar bar bar-header item-input-inset">
-        <label class="item-input-wrapper">
-          <i class="icon ion-ios-search placeholder-icon"></i>
-          <input type="search" placeholder="Search on Youtube	" ng-model="search.value" ng-enter="doSearch()"> 
-        </label>
-        <button type="button" class="button button-clear button-positive" ng-show="search.focus" ng-click="cancelSearch()">
-          Cancel
-        </button>
-      </div>
-    </form>
-  	<ion-list>
-	  <ion-item class="item-thumbnail-left" collection-repeat="item in result.items" href="#/tab/video/{{item.id.videoId}}">
-	  	<img src="{{ item.snippet.thumbnails.default.url }}">
-	    <h2> {{ item.snippet.title }}</h2>
-	    <p>{{ item.snippet.channelTitle }}</p>
-	  </ion-item>
-	</ion-list> 
-	<div ng-show="(!result.items.length>1)">No Result Found</div>
-	<ion-infinite-scroll ng-if="moreDataCanBeLoaded()" on-infinite="searcMore()" distance="3%">
-    </ion-infinite-scroll>	
-  </ion-content>
+<ion-view cache-view="false" view-title="{{title}}">
+  <ion-nav-buttons side="right">
+      <button class="button button-clear button-assertive" ng-if="searchHistory.length > 0 && search.value == ''" ng-click="clearSearchHistory()">Clear</button>
+  </ion-nav-buttons>
+  <ion-content>
+      <ion-refresher ng-if="search.value"
+        on-refresh="doRefresh()">
+      </ion-refresher>
+      <ion-search-bar ng-if="!history" placeholder="Search on Youtube" ng-enter="doSearch();"></ion-search-bar>
+      <ion-list ng-if="suggestions.length > 0 && search.value && items.length < 1">
+        <ion-item ui-sref="tab.search({q: item})" href="#/tab/search/{{item}}" ng-repeat="item in suggestions">
+         {{item}}
+       </ion-item>
+      </ion-list> 
+      <ion-list can-swipe="true" ng-if="searchHistory.length > 0 && search.value==''">
+        <ion-item ui-sref="tab.search({q: item})" href="#/tab/search/{{item}}" ng-repeat="item in searchHistory">
+         {{item}}
+         <ion-option-button class="button button-assertive" ng-click="removeFromSearchHistory(item)">
+         Delete
+         </ion-option-button>
+         <div class="item-icon-right">
+              <i class="icon ion-ios-arrow-right"></i>
+          </div>
+       </ion-item>
+      </ion-list>
+      <ion-list ng-if="items.length > 0 && done" canswipe="true">
+        <ion-item class="item-button-right item-thumbnail-left" ng-repeat="item in items" ui-sref="tab.video({videoId: item.id.videoId})">
+        	<img src="{{ item.snippet.thumbnails.default.url }}" item-width="33%" item-height="200px">
+          <h2> {{ item.snippet.title }}</h2>
+          <p>
+            by <a class="dark">{{ item.snippet.channelTitle }}</a>
+            <br />
+            <span am-time-ago="item.snippet.publishedAt"></span>
+          </p>
+          &nbsp;
+          <div class="buttons">
+            <button ng-click="showItemAction($event, item);" class="button button-large button-icon ion ion-ios-plus-outline">
+            </button>
+          </div>
+        </ion-item>
+      </ion-list> 
+      <ion-infinite-scroll ng-if="!noMore && done" on-infinite="doMore()" distance="3%">
+      </ion-infinite-scroll>
+    </ion-content>
+    <script id="add-to-playlists.html" type="text/ng-template">
+      <ion-modal-view>
+        <ion-header-bar class="bar bar-header bar-assertive">
+            <button class="button button-clear ion-plus button-light  " ng-click="createNewPlaylist()">
+            </button>
+          <h1 class="title">Add to Playlist</h1>
+          <button class="button button-clear button-primary" ng-click="playlistModal.hide()">Close</button>
+        </ion-header-bar>
+        <ion-content>
+            <ion-filter-bar placeholder="Search Playlist"></ion-filter-bar>
+            <ion-list>
+              <ion-item ng-click="addToPlaylist(video, playlist)" collection-repeat="playlist in playlists | filter:searchText">
+                 {{playlist.name}}
+              </ion-item>
+            </ion-list>
+        </ion-content>
+      </ion-modal-view>
+    </script>
 </ion-view>
+
+
 
 
  

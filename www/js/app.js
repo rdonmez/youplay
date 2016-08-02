@@ -5,14 +5,42 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
+angular.module('starter', [
+      'ionic',  
+      'starter.controllers', 
+      'starter.services', 
+      "ngCordova", 
+      "ngStorage", 
+      "angularMoment", 
+      "ionic-audio", 
+      "ngResource", 
+      "ngSanitize",
+      "com.2fdevs.videogular",
+      "com.2fdevs.videogular.plugins.controls",
+      "com.2fdevs.videogular.plugins.overlayplay",
+      "com.2fdevs.videogular.plugins.poster"
+])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform, $ionicPopup) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
+    if(window.Connection) {
+      if(navigator.connection.type == Connection.NONE) {
+        $ionicPopup.confirm({
+          title: 'No Internet Connection',
+          content: 'Sorry, no Internet connectivity detected. Please reconnect and try again.'
+        })
+        .then(function(result) {
+          if(!result) {
+            ionic.Platform.exitApp();
+          }
+        });
+      }
+    }
+
     if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
-      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
+      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(false);
       cordova.plugins.Keyboard.disableScroll(true);
 
     }
@@ -23,7 +51,8 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
   });
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($stateProvider, $httpProvider, $urlRouterProvider) {
+ 
 
   // Ionic uses AngularUI Router which uses the concept of states
   // Learn more here: https://github.com/angular-ui/ui-router
@@ -33,24 +62,20 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
 
   // setup an abstract state for the tabs directive
     .state('tab', {
-    url: '/tab',
+    
+    url: '/tab', 
+    cache:true,
     abstract: true,
     templateUrl: 'templates/tabs.html'
   })
 
   // Each tab has its own nav history stack:
 
-  .state('tab.home', {
-    url: '/home',
-    views: {
-      'tab-home': {
-        templateUrl: 'templates/tab-home.html',
-        controller: 'HomeCtrl'
-      }
-    }
-  })
   .state('tab.search', {
-    url: '/search',
+    url: '/search?q',
+    params: {
+      q: null
+    },
     views: {
       'tab-search': {
         templateUrl: 'templates/tab-search.html',
@@ -58,6 +83,17 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
       }
     }
   })
+
+  .state('tab.favorites', {
+    url: '/favorites',
+    views: {
+      'tab-favorites': {
+        templateUrl: 'templates/tab-favorites.html',
+        controller: 'FavoritesCtrl'
+      }
+    }
+  })
+
   .state('tab.video', {
     url: '/video/:videoId',
     views: {
@@ -67,15 +103,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
       }
     }
   })
-  .state('tab.playing', {
-      url: '/playing',
-      views: {
-        'tab-playing': {
-          templateUrl: 'templates/tab-playing.html',
-          controller: 'PlayingCtrl'
-        }
-      }
-    })
+
   .state('tab.playlists', {
       url: '/playlists',
       views: {
@@ -84,67 +112,168 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
           controller: 'PlaylistsCtrl'
         }
       }
-    });
+  })
+  .state('tab.playlists.playlist', {
+      url: '/playlist/:playlist',
+      views: {
+        'tab-playlists@tab': {
+          templateUrl: 'templates/tab-playlist.html',
+          controller: 'PlaylistCtrl'
+        }
+      }
+  })
+
+  .state('tab.history', {
+    url: '/history',
+    views: {
+      'tab-history': {
+        templateUrl: 'templates/tab-history.html',
+        controller: 'HistoryCtrl'
+      }
+    }
+  });
 
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/tab/home');
+  $urlRouterProvider.otherwise('/tab/search');
 
 })
 
-.directive('ionSearchBar', function($timeout, VideoService) {
+.directive('ngEnter', function () {
+  return function (scope, element, attrs) {
+    element.bind('keydown keypress', function (event) {
+
+      if(event.which === 13) {
+        scope.$apply(function (){
+            scope.$eval(attrs.ngEnter, {$event:event});
+        });
+        event.preventDefault();
+      }
+    });
+  };
+})
+.directive('ionSearchBar', function($timeout, $stateParams) {
   return {
     restrict: 'E',
-    replace: true,
-    scope: { search: '=?filter' },
-    link: function(scope, element, attrs) {
-      scope.placeholder = attrs.placeholder || '';
-      scope.search = {value: '', focus: false};
+    scope: false,
+    link: function($scope, element, attrs) {
+
       if (attrs.class) {
         element.addClass(attrs.class);
-      }
-
-      // We need the actual input field to detect focus and blur
+      } 
+        
       var inputElement = element.find('input')[0];
 
-      // This function is triggered when the user presses the `Cancel` button
-      scope.cancelSearch = function() {
-        // Manually trigger blur
-        inputElement.blur();
-        scope.search.value = '';
-      };
+      if (attrs.placeholder) {
+        inputElement.setAttribute("placeholder", attrs.placeholder);
+      }
+  
 
-      scope.doSearch = function() {
-        VideoService.search(scope.search.value).then(function (result) {
-           console.log(result);
-           scope.result = result;
-        });
-      };
+      $scope.suggestions = [];
+      $scope.selectedTags = [];
+      $scope.selectedIndex = -1; 
 
-      // When the user focuses the search bar
-      angular.element(inputElement).bind('focus', function () {
-        // We store the focus status in the model to show/hide the Cancel button
-        scope.search.focus = 1;
-        // Add a class to indicate focus to the search bar and the content area
-        element.addClass('search-bar-focused');
-        angular.element(document.querySelector('.has-search-bar')).addClass('search-bar-focused');
-        // We need to call `$digest()` because we manually changed the model
-        scope.$digest();
+      //scope.removeTag = function(index) {
+      //  scope.selectedTags.splice(index, 1);
+      //}
+
+      $scope.clearResults = function() {
+        $scope.suggestions = [];
+      }
+
+      $scope.selectSearchTerm = function(index) {
+        if ($scope.selectedTags.indexOf($scope.suggestions[index]) === -1) {
+          $scope.search.value = $scope.suggestions[index];
+          $scope.clearResults();
+        }
+      }
+
+      $scope.checkKeyDown = function(event) {
+        if (event.keyCode === 13) { //enter pressed
+          $scope.selectSearchTerm(scope.selectedIndex);
+        } else if (event.keyCode === 40) { //down key, increment selectedIndex
+          event.preventDefault();
+          if ($scope.selectedIndex + 1 !== $scope.suggestions.length) {
+            $scope.selectedIndex++;
+          }
+        } else if (event.keyCode === 38) { //up key, decrement selectedIndex
+          event.preventDefault();
+          if ($scope.selectedIndex - 1 !== -1) {
+            $scope.selectedIndex--;
+          }
+        }
+        //else scope.search();
+      };
+      $scope.checkKeyup = function(event) {
+        if (event.keyCode === 13 || event.keyCode === 40 || event.keyCode === 38)
+          return;
+        if($scope.suggest) $scope.suggest();
+      };
+      $scope.$watch('selectedIndex', function (val) {
+        if (val !== -1) {
+          $scope.search.value = $scope.suggestions[scope.selectedIndex];
+          $scope.doSearch();
+        }
       });
-      // When the user leaves the search bar
+      element.bind('blur', $scope.clearResults);
+      element.bind('keyup', $scope.checkKeyup);
+      angular.element(inputElement).bind('focus', function () {
+        if($scope.search) $scope.search.focus = true;
+      });
       angular.element(inputElement).bind('blur', function() {
-        scope.search.focus = 0;
-        element.removeClass('search-bar-focused');
-        angular.element(document.querySelector('.has-search-bar')).removeClass('search-bar-focused');
+        if($scope.search) $scope.search.focus = false;
       });
     },
-    template: '<form ng-submit="doSearch()" ><div class="search-bar bar bar-header item-input-inset">' +
+    template: ' '+
+                '<div class="search-bar item-input-inset">' +
                 '<label class="item-input-wrapper">' +
                   '<i class="icon ion-ios-search placeholder-icon"></i>' +
-                  '<input type="search" placeholder="" ng-model="search.value" ng-enter="doSearch()">' +
-                '</label>' +
-                '<button type="button" class="button button-clear button-positive" ng-show="search.focus" ng-click="cancelSearch()">' +
-                  'Cancel' +
-                '</button>' +
-              '</div></form>'
+                  '<input type="search" ng-model="search.value" style="width:100%">' +
+                  '<button right class="button button-clear button-small button-dark ng-hide" ng-show="search.value.length" on-touch="resetSearch(); ">' +
+                    '<i class="icon ion-ios-close placeholder-icon"></i>' +
+                  '</button>' + 
+                '</label>' + 
+              '</div> '
+  };
+})
+
+.directive('ionFilterBar', function($timeout, $stateParams) {
+  return {
+    restrict: 'E',
+    scope: false,
+     
+    link: function($scope, element, attrs) {
+
+      if (attrs.class) {
+        element.addClass(attrs.class);
+      } 
+
+      var inputElement = element.find('input')[0];
+
+      if (attrs.placeholder) {
+        inputElement.setAttribute("placeholder", attrs.placeholder);
+      }
+
+      $scope.resetSearch = function () {
+        $scope.searchText = '';
+      }
+    },
+    template: ' '+
+                '<div class="search-bar item-input-inset">' +
+                '<label class="item-input-wrapper">' +
+                  '<i class="icon ion-ios-search placeholder-icon"></i>' +
+                  '<input type="search" ng-model="searchText" style="width:100%">' +
+                  '<button right class="button button-clear button-small button-dark ng-hide" ng-show="searchText.length" on-touch="resetSearch(); ">' +
+                    '<i class="icon ion-ios-close placeholder-icon"></i>' +
+                  '</button>' + 
+                '</label>' + 
+              '</div> '
+  };
+})
+ 
+ 
+.filter("timeAgo", function() {
+  return function(date) {
+    return jQuery.timeago(date); 
   };
 });
+ 

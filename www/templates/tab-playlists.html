@@ -1,5 +1,39 @@
 <ion-view view-title="Playlists">
-  <ion-content>
-    coming soon.
-  </ion-content>
+	<ion-nav-buttons side="left">
+		<button class="button button-clear ion-plus button-assertive" ng-click="createNew()">
+		</button>
+	</ion-nav-buttons>
+	<ion-nav-buttons side="right">
+		<button ng-if="items.length > 0" class="button button-clear button-assertive ng-hide" ng-click="clearAll();" ng-show="data.showDelete">
+        	Clear
+        </button>
+        <button ng-if="items.length > 0" class="button button-clear button-assertive ng-hide" ng-click="data.showDelete = !data.showDelete;" ng-show="data.showDelete">
+        	Done
+        </button>
+        <button ng-if="items.length > 0" class="button button-clear button-assertive" ng-click="data.showDelete = !data.showDelete;" ng-show="!data.showDelete">
+        	Edit
+        </button>
+	</ion-nav-buttons>
+	<ion-content>
+		<ion-refresher
+        	on-refresh="doRefresh()">
+      	</ion-refresher>
+		<ion-filter-bar placeholder="Search Playlist"></ion-filter-bar>
+		<ion-list class="icon-right" can-swipe="true" show-delete="data.showDelete">
+			<ion-item item-width="100%" ui-sref="tab.playlists.playlist({ playlist: item.name })" href="#/tab/playlist/{{item.name}}" ng-repeat="item in items | filter:searchText">
+				<ion-delete-button class="ion-minus-circled" ng-click="removeItem(item.name)">
+    			</ion-delete-button>
+			    <ion-option-button class="button-positive" ng-click="editItem(item.name)">
+			      Edit
+			    </ion-option-button>
+			    <ion-option-button class="button-assertive" ng-click="removeItem(item.name)">
+			      Delete
+			    </ion-option-button>
+		   		{{item.name}}
+		   		<div class="item-icon-right">
+			        <i class="icon ion-ios-arrow-right"></i>
+			    </div>
+		 	</ion-item>
+		</ion-list>
+	</ion-content>
 </ion-view>

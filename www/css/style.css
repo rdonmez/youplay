@@ -1,0 +1,30 @@
+body {
+  cursor: url('http://ionicframework.com/img/finger.png'), auto;
+}    
+
+[ng\:cloak], [ng-cloak], .ng-cloak {
+  display: none !important;
+}
+
+.item-button-right {
+  padding-right: 0px;
+}
+
+[ng-show] {
+  -webkit-transition: 0s linear all;
+  transition: 0s linear all;
+}
+
+
+.custom-spinner {
+   margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  height: 85px;
+  text-align: center;
+  margin-top:100px;
+}
+
+.item.active, .item.activated, .item-complex.active .item-content, .item-complex.activated .item-content, .item .item-content.active, .item .item-content.activated {
+  background-color: #ffffff; 
+}

@@ -1,0 +1,28 @@
+<ion-view view-title="Favorites">
+	<ion-nav-buttons side="right">
+	    <button class="button button-clear button-assertive" ng-if="items.length > 0" ng-click="clearFavorites()">
+	    	Clear
+	    </button>
+	</ion-nav-buttons>
+	<ion-content>
+		<ion-refresher
+        	on-refresh="doRefresh()">
+      	</ion-refresher>
+		<ion-filter-bar placeholder="Search in Favorites">
+		</ion-filter-bar>
+		<ion-list>
+			<ion-item class="item-thumbnail-left" href="#/tab/video/{{item.id}}" ng-repeat="item in items | filter:searchText">
+	            <img src="{{ item.snippet.thumbnails.default.url }}" item-width="33%" item-height="200px">
+	           	<h2> {{ item.snippet.title }}</h2>
+				<p>
+					by <a class="dark">{{ item.snippet.channelTitle }}</a>
+					<br />
+					<span am-time-ago="item.snippet.publishedAt"></span>
+				</p> 
+			   <ion-option-button class="button-assertive" ng-click="removeFromFavorites(item)">
+			   Delete
+			   </ion-option-button>
+			 </ion-item>
+		</ion-list>
+	</ion-content>
+</ion-view>
